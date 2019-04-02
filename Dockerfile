@@ -36,7 +36,7 @@ RUN mvn --batch-mode clean install
 # Now install the jars
 RUN mkdir -p /dist/opt/nre &&\
     cd /dist/opt/nre &&\
-    unzip /work/target/activemq-rabbitmq-bridge-*-zip-with-jars.zip
+    unzip /work/target/opendatabridge-*-zip-with-jars.zip
 
 # The logging properties
 ADD logging.properties /dist/opt/nre/logging.properties
