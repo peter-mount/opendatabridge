@@ -49,5 +49,5 @@ RUN chmod +x /dist/docker-entry-point.sh
 FROM openjdk:8-jre-alpine
 MAINTAINER peter@retep.org
 WORKDIR /opt/nre
-
+ENTRYPOINT [ "/docker-entry-point.sh" ]
 COPY --from=build /dist/ /
