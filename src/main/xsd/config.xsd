@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:arb="http://area51.dev/xsd/amqrabbitbridge/v1"
+  targetNamespace="http://area51.dev/xsd/amqrabbitbridge/v1"
+  elementFormDefault="qualified"
+  attributeFormDefault="unqualified"
+  version="1.0">
+  <!--
+    Generic ActiveMQ to RabbitMQUtils bridge configuration schema
+
+    Copyright (c) 2019 Peter Mount
+  -->
+
+  <xs:complexType name="MessageBroker">
+    <xs:annotation>
+      <xs:documentation>A message broker</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="credentials" type="arb:Credentials" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The credentials</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="hostname" type="arb:Hostname" use="required">
+      <xs:annotation>
+        <xs:documentation>Hostname</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="port" type="arb:Port" use="optional">
+      <xs:annotation>
+        <xs:documentation>Port</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="disabled" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>Disable this server if set</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ConsumerDefinition">
+    <xs:annotation>
+      <xs:documentation>A consumer of messages</xs:documentation>
+    </xs:annotation>
+  </xs:complexType>
+
+  <xs:simpleType name="Hostname">
+    <xs:annotation>
+      <xs:documentation>Type representing a hostname</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Port">
+    <xs:annotation>
+      <xs:documentation>Type representing a port</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:unsignedShort">
+      <xs:maxInclusive value="65535"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="VHost">
+    <xs:annotation>
+      <xs:documentation>Type representing a virtual host</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Username">
+    <xs:annotation>
+      <xs:documentation>Type representing a username</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="Password">
+    <xs:annotation>
+      <xs:documentation>Type representing a password</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+
+  <xs:complexType name="Credentials">
+    <xs:annotation>
+      <xs:documentation>User Credentials</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="username" type="arb:Username" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The username</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="password" type="arb:Password" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The password</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="RabbitMQ">
+    <xs:annotation>
+      <xs:documentation>RabbitMQ server configuration</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:MessageBroker">
+        <xs:attribute name="vhost" type="arb:VHost" use="optional">
+          <xs:annotation>
+            <xs:documentation>Vhost, defaults to "/" if not present</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="rabbitmq" type="arb:RabbitMQ">
+    <xs:annotation>
+      <xs:documentation>The source ActiveMQ servers</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="MonitorDefinition">
+    <xs:annotation>
+      <xs:documentation>Common attributes for monitors</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:ConsumerDefinition">
+        <xs:attribute name="period" type="xs:unsignedShort" use="optional">
+          <xs:annotation>
+            <xs:documentation>The period in seconds to monitor</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="initialDelay" type="xs:unsignedShort" use="optional">
+          <xs:annotation>
+            <xs:documentation>The initial delay in seconds, defaults to period</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="Graphite">
+    <xs:annotation>
+      <xs:documentation>
+        Graphite metric reporting. The default for period is 10s
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:MonitorDefinition">
+        <xs:attribute name="exchange" type="xs:string" use="optional">
+          <xs:annotation>
+            <xs:documentation>Exchange to use, defaults to graphite</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="metric" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>The metric name</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="metricNameInBody" type="xs:boolean" use="optional">
+          <xs:annotation>
+            <xs:documentation>
+              If carbon.conf has AMQP_METRIC_NAME_IN_BODY set to true then this also needs to be set to true
+              so that the metric name is included in the message body, e.g. "metric value timestamp".
+
+              If this is set to false then the body is just "value timestamp".
+
+              In either case, the metric name is in the routing key.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="graphite" type="arb:Graphite">
+    <xs:annotation>
+      <xs:documentation>Record message rate to Graphite via RabbitMQ</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="RateLogger">
+    <xs:annotation>
+      <xs:documentation>
+        Record message rate to the log. The default for period is 60s
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:MonitorDefinition">
+        <xs:attribute name="label" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>The label to prefix the value</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="min" type="xs:unsignedShort" use="optional">
+          <xs:annotation>
+            <xs:documentation>
+              The minimum value this monitor will log events.
+              The default is 1 so we don't spam the logs.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="log" type="arb:RateLogger">
+    <xs:annotation>
+      <xs:documentation>Log message rate to the log</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="ExitAfterNoMessages">
+    <xs:annotation>
+      <xs:documentation>
+        The old issue16 hack to reset if no messages after a set number of minutes
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:ConsumerDefinition">
+        <xs:attribute name="idleTTL" type="xs:unsignedShort" use="optional">
+          <xs:annotation>
+            <xs:documentation>If no messages after this number of minutes then shutdown</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="exitAfterNoMessages" type="arb:ExitAfterNoMessages">
+    <xs:annotation>
+      <xs:documentation>
+        The old issue16 hack to reset if no messages after a set number of minutes
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="MessageBridge">
+    <xs:annotation>
+      <xs:documentation>Message bridge configuration</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:ConsumerDefinition">
+        <xs:attribute name="exchange" type="xs:string" use="optional">
+          <xs:annotation>
+            <xs:documentation>Exchange to use, defaults to amq.topic</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="routingKey" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>Routing Key for submitted messages</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="gzip" type="xs:boolean" use="optional">
+          <xs:annotation>
+            <xs:documentation>GUnzip binary content</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="ActiveMQBase">
+    <xs:annotation>
+      <xs:documentation>Common properties for ActiveMQ Queue &amp; Topic definitions</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:any minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="bridge" type="arb:MessageBridge">
+    <xs:annotation>
+      <xs:documentation>The bridge configuation</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="ActiveMQQueue">
+    <xs:annotation>
+      <xs:documentation>ActiveMQ Queue definition</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:ActiveMQBase">
+        <xs:attribute name="queue" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>Queue name</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="queue" type="arb:ActiveMQQueue">
+    <xs:annotation>
+      <xs:documentation>The source ActiveMQ Queue</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="ActiveMQTopic">
+    <xs:annotation>
+      <xs:documentation>ActiveMQ Topic definition</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:ActiveMQBase">
+        <xs:attribute name="topic" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>Topic name</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="topic" type="arb:ActiveMQTopic">
+    <xs:annotation>
+      <xs:documentation>The source ActiveMQ Topic</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="ActiveMQ">
+    <xs:annotation>
+      <xs:documentation>ActiveMQ server configuration</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="arb:MessageBroker">
+        <xs:sequence>
+          <!-- Multiple queue & topic elements in any order -->
+          <xs:any maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="clientId" type="arb:Username" use="optional">
+          <xs:annotation>
+            <xs:documentation>ClientID, defaults to the Username if not set</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:element name="activemq" type="arb:ActiveMQ">
+    <xs:annotation>
+      <xs:documentation>The source ActiveMQ servers</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="config">
+    <xs:annotation>
+      <xs:documentation>The root configuration</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <!--
+          Add message broker definitions here.
+          Although the first one is the destination RabbitMQ with one or more ActiveMQ instances
+          after it, it's done this way for future expansion as additional broker types could be
+          added at a later date including the option of using RabbitMQ as a source.
+        -->
+        <xs:any minOccurs="2" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
