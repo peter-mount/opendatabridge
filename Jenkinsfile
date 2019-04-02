@@ -17,10 +17,10 @@ properties([
 
 // Repository name use, must end with / or be '' for none.
 // Setting this to '' will also disable any pushing
-repository= 'docker.area51.onl/area51/'
+repository= 'area51/'
 
 // image prefix
-imagePrefix = 'darwinv16'
+imagePrefix = 'opendatabridge'
 
 // The architectures to build. This is an array of [node,arch]
 architectures = [

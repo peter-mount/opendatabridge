@@ -3,4 +3,4 @@
  *
  * @author Peter Mount
  */
-package dev.area51.activemqrabbitbridge;
+package dev.area51.opendatabridge;

@@ -1,4 +1,4 @@
-package dev.area51.activemqrabbitbridge;
+package dev.area51.opendatabridge;
 
 import dev.area51.broker.BrokerRepository;
 import dev.area51.runtime.Context;
